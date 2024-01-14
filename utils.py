@@ -81,8 +81,8 @@ def query_and_process_results(query_text, top_k=3, retries=3):
                 raise e
 
 
-def generate_summary(txt):
-    llm = langchain.OpenAI(api_key=OPENAI_API_KEY, temperature=0)
+def generate_summary(txt, api_key=OPENAI_API_KEY):
+    llm = langchain.OpenAI(api_key=api_key, temperature=0)
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500
     )
