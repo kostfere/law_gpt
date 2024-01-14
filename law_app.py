@@ -83,6 +83,6 @@ if st.button("Generate Summary"):
     st.write("Summary:")
     st.write(summary)
 
-if show_original:
-    st.write("Original Text:")
-    st.write(selected_case_text)
+    if show_original:
+        st.write("Original Text:")
+        st.write(selected_case_text)
