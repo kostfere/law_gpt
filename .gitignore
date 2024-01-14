@@ -1,0 +1,25 @@
+# Ignore Compiled Python files
+*.pyc
+
+# Ignore virtual environment directories
+venv/
+__pycache__/
+
+# Ignore log files
+*.log
+
+# Ignore zip files
+*.zip
+
+# Ignore database files
+*.db
+
+# Ignore macOS system files
+.DS_Store
+
+# Ignore temporary files
+.tmp/
+temp/
+
+# Ignore node.js modules
+node_modules/
