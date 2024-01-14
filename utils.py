@@ -21,7 +21,7 @@ PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 # Initialize pinecone
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
-
+index = pinecone.Index(INDEX_NAME)
 
 @st.cache_data
 def load_data():
