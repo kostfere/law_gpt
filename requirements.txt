@@ -1,5 +1,5 @@
-streamlit#==1.30.0
+streamlit==1.30.0
 pandas
-openai#==0.27.2
-pinecone-client#==2.2.4
-langchain#==0.1.0
+openai==0.27.2
+pinecone-client==2.2.4
+langchain
