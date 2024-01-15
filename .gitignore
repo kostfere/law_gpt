@@ -23,3 +23,4 @@ temp/
 
 # Ignore node.js modules
 node_modules/
+.streamlit/secrets.toml

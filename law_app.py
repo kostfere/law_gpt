@@ -19,8 +19,8 @@ load_dotenv()
 # Initialize Pinecone and OpenAI settings
 PINECONE_ENVIRONMENT = "gcp-starter"
 INDEX_NAME = "law-gpt"
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-API_KEY_ENV = os.getenv("OPENAI_API_KEY")
+PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 # Initialize pinecone
 
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
@@ -51,7 +51,7 @@ key_choice = st.sidebar.radio(
 if key_choice == "Use Your Own Key":
     API_Key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
 elif key_choice == "Use Free Key (capped)":
-    API_Key = API_KEY_ENV
+    API_Key = OPENAI_API_KEY
 
 # Display message based on API key selection
 if not API_Key:
@@ -83,6 +83,6 @@ if st.button("Generate Summary"):
     st.write("Summary:")
     st.write(summary)
 
-if show_original:
-    st.write("Original Text:")
-    st.write(selected_case_text)
+    if show_original:
+        st.write("Original Text:")
+        st.write(selected_case_text)

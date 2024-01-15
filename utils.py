@@ -17,8 +17,8 @@ load_dotenv()
 # Initialize Pinecone and OpenAI settings
 PINECONE_ENVIRONMENT = "gcp-starter"
 INDEX_NAME = "law-gpt"
-PINECONE_API_KEY = os.getenv("PINECONE_API_KEY")
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
+PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
+OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 # Initialize pinecone
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 index = pinecone.Index(INDEX_NAME)
