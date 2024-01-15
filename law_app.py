@@ -17,8 +17,7 @@ import pinecone
 # Initialize Pinecone and OpenAI settings
 PINECONE_ENVIRONMENT = "gcp-starter"
 INDEX_NAME = "law-gpt"
-PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
+
 # Initialize pinecone
 
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
@@ -36,26 +35,6 @@ df = load_data()
 
 # Streamlit app setup
 st.title("Legal Cases Viewer")
-
-# OpenAI API Key Management
-st.sidebar.header("API Key Configuration")
-
-key_choice = st.sidebar.radio(
-    "Choose your API Key source:",
-    ("Use Your Own Key", "Use Free Key"),
-    horizontal=True,
-)
-
-if key_choice == "Use Your Own Key":
-    API_Key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
-elif key_choice == "Use Free Key":
-    API_Key = OPENAI_API_KEY
-
-# Display message based on API key selection
-if not API_Key:
-    st.sidebar.error("Please enter the OpenAI API key to proceed.")
-else:
-    st.sidebar.success("API Key loaded successfully.")
 
 
 # Search functionality

@@ -27,25 +27,20 @@ def load_data():
     return data
 
 
-# Function to generate embeddings batch-wise
+client = OpenAI(api_key=OPENAI_API_KEY)
 
 
-client = OpenAI()
-
-
-def create_embedding(text, model="text-embedding-ada-002", api_key=OPENAI_API_KEY):
+def create_embedding(text, model="text-embedding-ada-002"):
     text = text.replace("\n", " ")
-    return client.embeddings.create(input=[text], model=model, api_key = api_key).data[0].embedding
+    return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 
-def batch_embeddings(
-    texts, batch_size=10, engine="text-embedding-ada-002", api_key=OPENAI_API_KEY
-):
+def batch_embeddings(texts, batch_size=10, engine="text-embedding-ada-002"):
     all_embeddings = []
     for i in range(0, len(texts), batch_size):
         batch_texts = texts[i : i + batch_size]
         for text in batch_texts:
-            embedding = create_embedding(text, engine, api_key)
+            embedding = create_embedding(text, engine)
             all_embeddings.append(embedding)
     return all_embeddings
 
