@@ -44,18 +44,18 @@ st.sidebar.header("API Key Configuration")
 
 key_choice = st.sidebar.radio(
     "Choose your API Key source:",
-    ("Use Your Own Key", "Use Free Key (capped)"),
+    ("Use Your Own Key", "Use Free Key"),
     horizontal=True,
 )
 
 if key_choice == "Use Your Own Key":
     API_Key = st.sidebar.text_input("Enter your OpenAI API key", type="password")
-elif key_choice == "Use Free Key (capped)":
+elif key_choice == "Use Free Key":
     API_Key = OPENAI_API_KEY
 
 # Display message based on API key selection
 if not API_Key:
-    st.sidebar.warning(API_Key)
+    st.sidebar.error("Please enter the OpenAI API key to proceed.")
 else:
     st.sidebar.success("API Key loaded successfully.")
 
