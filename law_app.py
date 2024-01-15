@@ -3,7 +3,6 @@ import pandas as pd
 
 import os
 
-from dotenv import load_dotenv
 import time
 from utils import (
     query_and_process_results,
@@ -14,7 +13,6 @@ from utils import (
 
 import pinecone
 
-load_dotenv()
 
 # Initialize Pinecone and OpenAI settings
 PINECONE_ENVIRONMENT = "gcp-starter"

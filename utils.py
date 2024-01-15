@@ -12,8 +12,6 @@ import time
 # from utils import (query_and_process_results, generate_summary, batch_embeddings, load_data)
 
 
-load_dotenv()
-
 # Initialize Pinecone and OpenAI settings
 PINECONE_ENVIRONMENT = "gcp-starter"
 INDEX_NAME = "law-gpt"
