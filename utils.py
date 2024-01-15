@@ -6,7 +6,6 @@ import os
 import openai
 import pinecone
 from tqdm import tqdm
-from dotenv import load_dotenv
 import time
 
 # from utils import (query_and_process_results, generate_summary, batch_embeddings, load_data)
