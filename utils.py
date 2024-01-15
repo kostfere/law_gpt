@@ -3,7 +3,7 @@ import langchain
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains.summarize import load_summarize_chain
 import os
-import openai
+from openai import OpenAI
 import pinecone
 from tqdm import tqdm
 import time
@@ -20,6 +20,7 @@ OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
 pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
 index = pinecone.Index(INDEX_NAME)
 
+
 @st.cache_data
 def load_data():
     data = pd.read_csv("processed_data.csv")
@@ -29,15 +30,12 @@ def load_data():
 # Function to generate embeddings batch-wise
 
 
-def create_embedding(text, engine="text-embedding-ada-002", api_key=OPENAI_API_KEY):
-    response = openai.Embedding.create(
-        input=[text],  # Wrap the text in a list
-        engine=engine,
-        api_key=api_key,
-    )
-    # Assuming response is successful and contains data
-    embedding = response["data"][0]["embedding"]
-    return embedding
+client = OpenAI()
+
+
+def create_embedding(text, model="text-embedding-ada-002", api_key=OPENAI_API_KEY):
+    text = text.replace("\n", " ")
+    return client.embeddings.create(input=[text], model=model, api_key = api_key).data[0].embedding
 
 
 def batch_embeddings(
@@ -90,9 +88,12 @@ def generate_summary(txt, api_key=OPENAI_API_KEY):
     output = summary_chain.run(docs)
     return output
 
-def upload_embeddings_to_pinecone(df, text_splitter, batch_embeddings, index, upload_threshold=5):
+
+def upload_embeddings_to_pinecone(
+    df, text_splitter, batch_embeddings, index, upload_threshold=5
+):
     """Upload embeddings to Pinecone in batches.
-    
+
     Args:
     df: DataFrame containing the text data.
     text_splitter: Function to split text into smaller chunks.
@@ -104,12 +105,14 @@ def upload_embeddings_to_pinecone(df, text_splitter, batch_embeddings, index, up
     processed_rows = 0
 
     for _, row in tqdm(df.iterrows(), desc="Processing rows", total=len(df)):
-        chunks = text_splitter.split_text(row['text'])
+        chunks = text_splitter.split_text(row["text"])
         for chunk_index, chunk in enumerate(chunks):
             chunk_embedding = next(batch_embeddings([chunk]))
-            metadata = {'text': chunk, 'original_id': row['id']}
-            data_to_upload.append((f"{row['id']}-{chunk_index}", chunk_embedding[0], metadata))
-        
+            metadata = {"text": chunk, "original_id": row["id"]}
+            data_to_upload.append(
+                (f"{row['id']}-{chunk_index}", chunk_embedding[0], metadata)
+            )
+
         processed_rows += 1
         if processed_rows >= upload_threshold:
             index.upsert(vectors=data_to_upload)
@@ -121,4 +124,3 @@ def upload_embeddings_to_pinecone(df, text_splitter, batch_embeddings, index, up
         index.upsert(vectors=data_to_upload)
 
     # upload_embeddings_to_pinecone(df, text_splitter, batch_embeddings, index)
-
