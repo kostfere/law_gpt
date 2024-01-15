@@ -3,4 +3,7 @@ pandas
 openai
 pinecone-client
 langchain
+langchain_openai
+langchainhub
+lark
 tiktoken
