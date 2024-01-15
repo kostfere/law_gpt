@@ -35,43 +35,58 @@ df = load_data()
 st.title("Legal Cases Viewer")
 
 
-st.write("## Search Cases")
-search_query = st.text_input("Enter a search query:")
-top_n = st.slider("Select the number of top matches to display:", 1, 10, 3)
+def main():
+    # Tabs creation
+    tab1, tab2, tab3 = st.tabs(
+        ["Search Cases", "Generate Case Summary", "Ask a Question about a Case"]
+    )
 
-if st.button("Search"):
-    if search_query:
-        search_results = query_and_process_results(
-            search_query, index, client, top_k=top_n
+    with tab1:
+        st.write("## Search Cases")
+        search_query = st.text_input("Enter a search query:")
+        top_n = st.slider("Select the number of top matches to display:", 1, 10, 3)
+
+        if st.button("Search"):
+            if search_query:
+                search_results = query_and_process_results(
+                    search_query, index, client, top_k=top_n
+                )
+                for result in search_results:
+                    st.markdown(f"#### ID: {result['id']}, Score: {result['score']}")
+                    st.write(result["text"])
+                    st.markdown("---")
+
+    with tab2:
+        st.write("## Generate Case Summary")
+        case_id = st.selectbox("Select a Case ID for summary:", df["id"])
+        show_original = st.checkbox("Show Original Text")
+
+        if st.button("Generate Summary"):
+            selected_case_text = df[df["id"] == case_id]["text"].iloc[0]
+            summary = generate_summary(selected_case_text, OPENAI_API_KEY)
+            st.write("Summary:")
+            st.write(summary)
+
+            if show_original:
+                st.write("Original Text:")
+                st.write(selected_case_text)
+
+    with tab3:
+        st.write("## Ask a Question about a Case")
+        selected_case_id = st.selectbox(
+            "Select a Case ID to ask a question about:", df["id"]
         )
-        for result in search_results:
-            st.markdown(f"#### ID: {result['id']}, Score: {result['score']}")
-            st.write(result["text"])
-            st.markdown("---")
+        user_question = st.text_input("Enter your question about the case:")
 
-st.write("## Generate Case Summary")
-case_id = st.selectbox("Select a Case ID for summary:", df["id"])
-show_original = st.checkbox("Show Original Text")
+        if st.button("Get Answer"):
+            if user_question:
+                # Assuming you have a function to process the question and fetch the answer
+                # Example: get_case_answer(case_id, question, index, client)
+                answer = case_qa(selected_case_id, user_question, prompt, client, index)
+                st.write("Answer:")
+                st.write(answer)
 
 
-if st.button("Generate Summary"):
-    selected_case_text = df[df["id"] == case_id]["text"].iloc[0]
-    summary = generate_summary(selected_case_text, OPENAI_API_KEY)
-    st.write("Summary:")
-    st.write(summary)
-
-    if show_original:
-        st.write("Original Text:")
-        st.write(selected_case_text)
-
-st.write("## Ask a Question about a Case")
-selected_case_id = st.selectbox("Select a Case ID to ask a question about:", df["id"])
-user_question = st.text_input("Enter your question about the case:")
-
-if st.button("Get Answer"):
-    if user_question:
-        # Assuming you have a function to process the question and fetch the answer
-        # Example: get_case_answer(case_id, question, index, client)
-        answer = case_qa(selected_case_id, user_question, prompt, client, index)
-        st.write("Answer:")
-        st.write(answer)
+# Call the main function
+if __name__ == "__main__":
+    main()
