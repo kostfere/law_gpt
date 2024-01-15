@@ -12,6 +12,16 @@ import time
 from typing import Callable, List, Any
 
 
+from langchain.schema import Document
+from langchain_community.vectorstores import Pinecone
+from langchain_openai import OpenAIEmbeddings
+from langchain.chains.query_constructor.base import AttributeInfo
+from langchain.retrievers.self_query.base import SelfQueryRetriever
+from langchain.chains import RetrievalQA
+from langchain import hub
+import time
+
+
 @st.cache_data
 def load_data():
     data = pd.read_csv("processed_data.csv")
@@ -71,13 +81,14 @@ def generate_summary(txt, api_key):
     output = summary_chain.run(docs)
     return output
 
+
 def upload_embeddings_to_pinecone(
-    df: pd.DataFrame, 
-    text_splitter: Any, 
-    batch_embeddings: Callable[[List[str], Any], List[List[float]]], 
-    client: Any, 
-    index: Any, 
-    upload_threshold: int = 5
+    df: pd.DataFrame,
+    text_splitter: Any,
+    batch_embeddings: Callable[[List[str], Any], List[List[float]]],
+    client: Any,
+    index: Any,
+    upload_threshold: int = 5,
 ) -> None:
     """Upload embeddings to Pinecone in batches.
 
@@ -113,29 +124,62 @@ def upload_embeddings_to_pinecone(
     if data_to_upload:
         index.upsert(vectors=data_to_upload)
 
-    
-def query_legal_case(query, index, llm, top_k=3):
+
+# Function to retrieve case resolution using QA approach
+INDEX_NAME = "law-gpt"
+
+def case_qa(
+    case_id: int, question: str, prompt: str, client: OpenAI, index: pinecone.Index, retries=3
+) -> str:
     """
-    Query specific legal case details based on the query.
+    Query a legal case by querying a Pinecone index and processing the results with a language model.
 
-    Args:
-    query (str): The query or case ID to be searched.
-    index (pinecone.Index): Pinecone index for querying vectors.
-    llm (langchain.ChatOpenAI): Initialized LangChain's ChatOpenAI model.
-    top_k (int): Number of top results to retrieve.
-
-    Returns:
-    list: List of responses from the QA chain.
+    :param case_id: The unique identifier of the case.
+    :param question: The query question regarding the case resolution.
+    :param prompt: The prompt for the retrieval-based QA model.
+    :param client: The OpenAI client for embedding generation.
+    :param index: The Pinecone index for querying documents.
+    :param retries: Number of retries in case of failure.
+    :return: The answer to the question about the case resolution.
     """
-    # Perform similarity search using Pinecone
-    query_vector = create_embedding(query, client)
-    query_results = index.query(vector=query_vector, top_k=top_k, include_metadata=True)
+    attempt = 0
+    while attempt < retries:
+        try:
+            query_vector = create_embedding(question, client)
+            query_results = index.query(
+                vector=query_vector,
+                filter={"original_id": case_id},
+                top_k=5,
+                include_metadata=True,
+            )
 
-    # Extract texts from query results
-    docs = [result["metadata"]["text"] for result in query_results["matches"]]
+            documents = [
+                Document(
+                    page_content=result["metadata"]["text"], metadata=result["metadata"]
+                )
+                for result in query_results["matches"]
+            ]
 
-    # Load QA Chain
-    chain = load_qa_chain(llm, chain_type="stuff")
+            embeddings = OpenAIEmbeddings()
+            vector_store = Pinecone.from_documents(
+                documents, embeddings, index_name=INDEX_NAME
+            )
 
-    # Run QA Chain
-    return chain.run(input_documents=docs, question=query)
+            llm = langchain_openai.OpenAI(temperature=0)
+            retriever = SelfQueryRetriever.from_llm(
+                llm, vector_store, "text parts from the case", [], verbose=True
+            )
+
+            qa_chain = RetrievalQA.from_chain_type(
+                llm, retriever=retriever, chain_type_kwargs={"prompt": prompt}
+            )
+            result = qa_chain.invoke({"query": question})
+            return result["result"]
+        except Exception as e:
+            if attempt < retries - 1:  # if it's not the last attempt
+                time.sleep(2)  # wait for 2 seconds before retrying
+                attempt += 1
+                continue
+            else:
+                st.error(f"An error occurred: {e}")
+                return ""
