@@ -42,7 +42,7 @@ show_original = st.checkbox("Show Original Text")
 
 if st.button("Generate Summary"):
     selected_case_text = df[df["id"] == case_id]["text"].iloc[0]
-    summary = generate_summary(selected_case_text, api_key=API_Key)
+    summary = generate_summary(selected_case_text)
     st.write("Summary:")
     st.write(summary)
 
