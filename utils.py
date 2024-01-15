@@ -78,8 +78,8 @@ def generate_summary(txt, api_key):
     summary_chain = load_summarize_chain(
         llm=llm, chain_type="map_reduce", verbose=False
     )
-    output = summary_chain.run(docs)
-    return output
+    output = summary_chain.invoke(docs)
+    return output["output_text"]
 
 
 def upload_embeddings_to_pinecone(
@@ -128,8 +128,14 @@ def upload_embeddings_to_pinecone(
 # Function to retrieve case resolution using QA approach
 INDEX_NAME = "law-gpt"
 
+
 def case_qa(
-    case_id: int, question: str, prompt: str, client: OpenAI, index: pinecone.Index, retries=3
+    case_id: int,
+    question: str,
+    prompt: str,
+    client: OpenAI,
+    index: pinecone.Index,
+    retries=3,
 ) -> str:
     """
     Query a legal case by querying a Pinecone index and processing the results with a language model.
