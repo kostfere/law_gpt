@@ -35,7 +35,7 @@ df = load_data()
 st.title("Legal Cases Viewer")
 
 
-st.write("## Search for Similar Cases")
+st.write("## Search Cases")
 search_query = st.text_input("Enter a search query:")
 top_n = st.slider("Select the number of top matches to display:", 1, 10, 3)
 
