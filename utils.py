@@ -8,18 +8,6 @@ import pinecone
 from tqdm import tqdm
 import time
 
-# from utils import (query_and_process_results, generate_summary, batch_embeddings, load_data)
-
-
-# Initialize Pinecone and OpenAI settings
-PINECONE_ENVIRONMENT = "gcp-starter"
-INDEX_NAME = "law-gpt"
-PINECONE_API_KEY = st.secrets["PINECONE_API_KEY"]
-OPENAI_API_KEY = st.secrets["OPENAI_API_KEY"]
-# Initialize pinecone
-pinecone.init(api_key=PINECONE_API_KEY, environment=PINECONE_ENVIRONMENT)
-index = pinecone.Index(INDEX_NAME)
-
 
 @st.cache_data
 def load_data():
@@ -27,28 +15,25 @@ def load_data():
     return data
 
 
-client = OpenAI(api_key=OPENAI_API_KEY)
-
-
-def create_embedding(text, model="text-embedding-ada-002"):
+def create_embedding(text, client, model="text-embedding-ada-002"):
     text = text.replace("\n", " ")
     return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 
-def batch_embeddings(texts, batch_size=10, engine="text-embedding-ada-002"):
+def batch_embeddings(texts, client, batch_size=10, engine="text-embedding-ada-002"):
     all_embeddings = []
     for i in range(0, len(texts), batch_size):
         batch_texts = texts[i : i + batch_size]
         for text in batch_texts:
-            embedding = create_embedding(text, engine)
+            embedding = create_embedding(text, client, engine)
             all_embeddings.append(embedding)
     return all_embeddings
 
 
-def query_and_process_results(query_text, top_k=3, retries=3):
+def query_and_process_results(query_text, index, client, top_k=3, retries=3):
     for attempt in range(retries):
         try:
-            query_vector = create_embedding(query_text)
+            query_vector = create_embedding(query_text, client)
             query_results = index.query(
                 vector=query_vector, top_k=top_k, include_metadata=True
             )
@@ -71,7 +56,7 @@ def query_and_process_results(query_text, top_k=3, retries=3):
                 raise e
 
 
-def generate_summary(txt, api_key=OPENAI_API_KEY):
+def generate_summary(txt, api_key):
     llm = langchain.OpenAI(api_key=api_key, temperature=0)
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500
