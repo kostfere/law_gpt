@@ -20,20 +20,46 @@ from langchain.retrievers.self_query.base import SelfQueryRetriever
 from langchain.chains import RetrievalQA
 from langchain import hub
 import time
+from typing import Any
+import numpy as np
 
 
 @st.cache_data
-def load_data():
+def load_data() -> pd.DataFrame:
     data = pd.read_csv("processed_data.csv")
     return data
 
 
-def create_embedding(text, client, model="text-embedding-ada-002"):
+def create_embedding(text: str, client: Any, model: str = "text-embedding-ada-002") -> np.ndarray:
+    """
+    Creates an embedding for the given text using the specified model.
+
+    Args:
+        text (str): The input text to be embedded.
+        client (Any): The client object used for embedding.
+        model (str, optional): The name of the model to be used for embedding. 
+            Defaults to "text-embedding-ada-002".
+
+    Returns:
+        numpy.ndarray: The embedding vector for the input text.
+    """
     text = text.replace("\n", " ")
     return client.embeddings.create(input=[text], model=model).data[0].embedding
 
 
-def batch_embeddings(texts, client, batch_size=10, engine="text-embedding-ada-002"):
+def batch_embeddings(texts: List[str], client: Any, batch_size: int = 10, engine: str = "text-embedding-ada-002") -> List[np.ndarray]:
+    """
+    Generate embeddings for a batch of texts using the specified client and engine.
+
+    Args:
+        texts (List[str]): A list of texts to generate embeddings for.
+        client (Any): The client object used for generating embeddings.
+        batch_size (int, optional): The size of each batch. Defaults to 10.
+        engine (str, optional): The engine to use for generating embeddings. Defaults to "text-embedding-ada-002".
+
+    Returns:
+        List[numpy.ndarray]: A list of embeddings generated for the input texts.
+    """
     all_embeddings = []
     for i in range(0, len(texts), batch_size):
         batch_texts = texts[i : i + batch_size]
@@ -70,6 +96,16 @@ def query_and_process_results(query_text, index, client, top_k=3, retries=3):
 
 
 def generate_summary(txt, api_key):
+    """
+    Generate a summary of the given text using OpenAI language model.
+
+    Args:
+        txt (str): The text to be summarized.
+        api_key (str): The API key for accessing the OpenAI service.
+
+    Returns:
+        str: The generated summary.
+    """
     llm = langchain_openai.OpenAI(api_key=api_key, temperature=0)
     text_splitter = RecursiveCharacterTextSplitter(
         separators=["\n\n", "\n"], chunk_size=10000, chunk_overlap=500
@@ -80,7 +116,6 @@ def generate_summary(txt, api_key):
     )
     output = summary_chain.invoke(docs)
     return output["output_text"]
-
 
 def upload_embeddings_to_pinecone(
     df: pd.DataFrame,
